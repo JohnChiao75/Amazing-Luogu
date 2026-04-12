@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amazing Luogu
 // @namespace    https://zym2013.dpdns.org/
-// @version      0.9.2
+// @version      0.9.3
 // @description  Amazing Luogu with Chat Markdown, Problem Colors, Cover Removal, Problem Jumper, Save Station Jumper, and More!
 // @author       zhangyimin12345&yangrenrui
 // @icon         https://cdn.luogu.com.cn/upload/usericon/3.png
@@ -3436,16 +3436,6 @@ async function all() {
 				});
 
 				featuresHTML += `<div class="aml-no-results" id="aml-no-results">未找到匹配的功能项</div></div></div>
-		<div class="aml-settings-section aml-home-card">
-			<h4><i class="fa-solid fa-brush"></i> &nbsp;难度颜色</h4>
-			<div id="aml-problemcolors-section" style="display: ${currentSettings.problemColors ? "block" : "none"};">
-				<div class="aml-input-group">
-					<label for="aml-color-interval">难度颜色请求间隔 (ms):</label>
-					<input type="number" id="aml-color-interval" value="${currentSettings.colorUpdateInterval}">
-				</div>
-			</div>
-			<div id="aml-problemcolors-disabled-notice" class="disabled-notice" style="display: ${currentSettings.problemColors ? "none" : "block"};">难度颜色功能已关闭，请在功能开关中开启。</div>
-		</div>
 		<div class="aml-settings-section aml-home-card">
 			<h4><i class="fa-solid fa-code"></i> &nbsp;VSCode Luogu API</h4>
 			<div id="aml-vscode-luogu-section" style="display: ${currentSettings.vscodeLuoguEnabled ? "block" : "none"};">
@@ -7390,7 +7380,8 @@ async function all() {
 				if (!isAdmin && !verified) {
 					console.log("增强功能启动")
 					const it = res.user.introduction;
-					const introduction = marked.parse(it);
+					const escapedIt = it.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+					const introduction = marked.parse(escapedIt);
 
 					// ==============================================
 					// ✅ 1:1 还原洛谷原生 l-card 结构、属性、样式
@@ -7448,7 +7439,8 @@ async function all() {
 						const cardHeader = targetCard.querySelector('.header');
 						const resData = JSON.parse(document.getElementById("lentille-context").innerHTML).data;
 						const it = resData.user.introduction;
-						const introduction = marked.parse(it);
+						const escapedIt = it.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+						const introduction = marked.parse(escapedIt);
 
 						if (cardHeader) {
 							// 没有edit-tab就自动创建，带上 aml-deltab
@@ -9321,6 +9313,12 @@ async function all() {
 			async function checkScriptVersion(op) {
 				const sources = [
 					{
+						name: "Official Website",
+						versionUrl: "https://amlg.top/Amazing-Luogu/versions.json",
+						downloadUrl: "https://amlg.top/Amazing-Luogu/index.user.js",
+						priority: 1,
+					},
+					{
 						name: "GitHub Raw Mirror 1",
 						versionUrl:
 							"https://raw.bgithub.xyz/Snow-Domain-Smart-Fox/Amazing-Luogu/refs/heads/main/versions.json",
@@ -9425,7 +9423,7 @@ async function all() {
 							GM_xmlhttpRequest({
 								method: "GET",
 								url: source.versionUrl.trim(),
-								timeout: 2000,
+								timeout: source.priority ? 10000 : 2000,
 								onload: (response) => {
 									try {
 										const versionData = JSON.parse(response.responseText);
@@ -9440,6 +9438,7 @@ async function all() {
 												version,
 												downloadUrl: source.downloadUrl.trim(),
 												sourceName: source.name,
+												priority: source.priority || 0,
 												error: null,
 											});
 										} else {
@@ -9490,6 +9489,15 @@ async function all() {
 						sourceUsed = result.sourceName;
 					}
 				}
+				for (const result of results) {
+					if(result.priority) {
+						latestVersion = result.version || latestVersion;
+						downloadUrl = result.downloadUrl || downloadUrl;
+						sourceUsed = result.sourceName || sourceUsed;
+						console.log(`优先源 ${result.sourceName} 的版本检查结果：`, result);
+					}
+				}
+				console.log(latestVersion, downloadUrl, sourceUsed);
 				if (!latestVersion) {
 					return;
 				}
@@ -9507,11 +9515,12 @@ async function all() {
 					});
 					if (result.isConfirmed) {
 						window.location.href = downloadUrl;
+						GM_setValue("aml_last_snooze_time", now);
 					} else {
 						GM_setValue("aml_last_snooze_time", now);
 					}
 				} else {
-					GM_deleteValue("aml_last_snooze_time");
+					GM_setValue("aml_last_snooze_time", now);
 				}
 			}
 			setTimeout(checkScriptVersion(1), 1500);
