@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amazing Luogu
 // @namespace    https://zym2013.dpdns.org/
-// @version      0.9.3
+// @version      0.9.4
 // @description  Amazing Luogu with Chat Markdown, Problem Colors, Cover Removal, Problem Jumper, Save Station Jumper, and More!
 // @author       zhangyimin12345&yangrenrui
 // @icon         https://cdn.luogu.com.cn/upload/usericon/3.png
@@ -7984,11 +7984,11 @@ async function all() {
 				const CACHE_KEY = 'AMLG_PROBLEM_COLORS_CACHED';
 
 				// 1. 读取缓存数据
-				const cachedData = GM_getValue(CACHE_KEY, null);
+				const cachedData = GM_getValue(CACHE_KEY, {expireTime: 0, colorEntries: [], version: "0.9.4"});
 				let problemColorMap;
 
 				// 2. 判断缓存是否有效（存在 + 未过期）
-				if (cachedData && Date.now() < cachedData.expireTime) {
+				if ((cachedData && Date.now() < cachedData.expireTime || cachedData.colorEntries.length==0)&&(cachedData.version=="0.9.4")) {
 					// 直接使用缓存，快速恢复 Map
 					problemColorMap = new Map(cachedData.colorEntries);
 					console.log(Date.now(), "Using cached problem color map (valid for 30d)");
