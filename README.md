@@ -1,7 +1,3 @@
-已更新安装链接为 GitHub Raw 地址，并移除 GreasyFork 相关内容。以下是完整 README：
-
----
-
 # Amazing Luogu
 
 > **让洛谷变得更好的篡改猴插件**  
